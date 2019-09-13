@@ -36,7 +36,6 @@ class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         view.backgroundColor = UIColor.deepBlue
-        print("viewWillAppear gets called!")
     }
 
     override func viewDidLoad() {
