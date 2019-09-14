@@ -13,12 +13,12 @@ import FirebaseAuth
 
 class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
     
-    let fullLogin = true
+    let fullLogin = false
     var signedOut = false
+    var newUser: Bool?
     fileprivate(set) var auth:Auth?
     fileprivate(set) var authUI: FUIAuth? //only set internally but get externally
     fileprivate(set) var authStateListenerHandle: AuthStateDidChangeListenerHandle?
-    var instaLogin: Bool?
     var segueIdentifier: String? {
         didSet {
             chooseNextVC()
@@ -31,11 +31,12 @@ class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
             pushManager.registerForPushNotifications()
         }
     }
-    var loading = true
+    var userPhoneNumber: String?
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         view.backgroundColor = UIColor.deepBlue
+        print("viewWillAppear gets called!")
     }
 
     override func viewDidLoad() {
@@ -72,32 +73,29 @@ class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
                 
                 if snapshot.hasChild(user!.uid) {
                     
+                    // This user already exists in database, don't show them intro screen
+                    print("Not a new user, skip to home page")
                     self.firebaseUID = user!.uid
-                    
-                    if snapshot.hasChild("\(user!.uid)/userHandle") {
-                        
-                        print("Already signed in with Instagram, skip to home page")
-                        
-                        self.instaLogin = false
-                        self.segueIdentifier = "SkipToMainScreen"
-                        
-                    } else {
-                        
-                        print("Take them to Instagram login")
-                        
-                        self.instaLogin = true
-                        self.segueIdentifier = "ShowInstaLogin"
-
+                    let rawUserPhoneNumber = user!.providerData[0].phoneNumber
+                    if rawUserPhoneNumber != nil {
+                        self.userPhoneNumber = rawUserPhoneNumber!.tenChars()
                     }
-                    
+                    self.newUser = false
+                    self.segueIdentifier = "SkipToMainScreen"
+
                 } else {
                     
+                    // This is a new user, show them intro screen
+                    print("Created a new user! Take them to intro screen")
                     ref.child("users/\(user!.uid)/phoneAuthID").setValue(user!.uid)
+                    let rawUserPhoneNumber = user!.providerData[0].phoneNumber
+                    if rawUserPhoneNumber != nil {
+                        self.userPhoneNumber = rawUserPhoneNumber!.tenChars()
+                    }
+                    ref.child("users/\(user!.uid)/userPhoneNumber").setValue(self.userPhoneNumber)
                     self.firebaseUID = user!.uid
-                    print("Created a new user! Take them to Instagram login")
-                    
-                    self.instaLogin = true
-                    self.segueIdentifier = "ShowInstaLogin"
+                    self.newUser = true
+                    self.segueIdentifier = "ShowIntroScreen"
 
                 }
             })
@@ -107,27 +105,17 @@ class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         print("ViewDidAppear gets called!")
-        
+    
         chooseNextVC()
         
     }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-        print("ViewWillDisappear gets called!")
-        
-        // removes listener for auth state changes (log out, etc.)
-//        Auth.auth().removeStateDidChangeListener(authStateListenerHandle!)
-        
-    }
-    
+
     func chooseNextVC() {
-        if instaLogin != nil, instaLogin == true {
-            print("Seguing to InstaLogin")
-            performSegue(withIdentifier: "ShowInstaLogin", sender: nil)
-        } else if instaLogin != nil, instaLogin == false {
-            print("Did not segue to InstaLogin")
+        if newUser != nil, newUser == true {
+            print("Seguing to intro screen")
+            performSegue(withIdentifier: "ShowIntroScreen", sender: nil)
+        } else if newUser != nil, newUser == false {
+            print("Did not segue to intro screen")
             performSegue(withIdentifier: "SkipToMainScreen", sender: nil)
         } else {
             print("Skipped segue")
@@ -136,13 +124,14 @@ class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         
-        if segue.identifier == segueIdentifier, segueIdentifier == "ShowInstaLogin" {
+        if segue.identifier == segueIdentifier, segueIdentifier == "ShowIntroScreen" {
             var destination = segue.destination
             if let navcon = destination as? UINavigationController {
                 destination = navcon.visibleViewController ?? navcon
             }
-            if let instaVC = destination as? InstaLoginViewController {
-                instaVC.firebaseUID = firebaseUID
+            if let introVC = destination as? IntroScreenViewController {
+                introVC.firebaseUID = firebaseUID
+                introVC.userPhoneNumber = userPhoneNumber
             }
         } else if segue.identifier == segueIdentifier, segueIdentifier == "SkipToMainScreen" {
             var destination = segue.destination
@@ -151,17 +140,13 @@ class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
             }
             if let mainVC = destination as? MainScreenViewController {
                 mainVC.firebaseUID = firebaseUID
+                mainVC.userPhoneNumber = userPhoneNumber
             }
         }
     }
 }
 
 extension PhoneAuthViewController {
-    
-    
-    
-    
-    
     
     @IBAction func loginAction(sender: AnyObject) {
         // Present the default login view controller provided by authUI

@@ -9,12 +9,12 @@
 import UIKit
 import Firebase
 import FirebaseUI
+import ContactsUI
 
-class MainScreenViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class MainScreenViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, CNContactPickerDelegate {
     
     let ref = Database.database().reference()
-    var userHandle: String?
-    var instaUID: String?
+    var userPhoneNumber: String?
     var firebaseUID: String?
     var matches: [String] = [] {
         didSet {
@@ -31,20 +31,19 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         }
     }
     
-    var listDict: [String: Bool]?
-
-    var listArray: [String]? {
+    var listDict: [String: String]? {
         didSet {
-            print("listArray gets set!!!")
-            // Clears out old listDict and populates with
+            print("listDict gets set and is \(String(describing: listDict))")
+            
+            // Clears out old listArray and populates with
             // new listArray values
-            listDict = [:]
-            if listArray != nil {
-                for handle in listArray! {
-                    listDict![handle] = true
+            listArray = []
+            if listDict != nil {
+                for (key, _) in listDict! {
+                    listArray!.append(key)
                 }
                 // Updates list in the database
-                let newListDict = listDict?.encode(dict: listDict)
+                let newListDict = listDict!.encode(dict: listDict)
                 ref.child("users/\(firebaseUID!)/list").setValue(newListDict)
                 
                 // Sorts matches to front of listArray
@@ -54,6 +53,12 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
                 // Redisplays the table data
                 tableView.reloadData()
             }
+        }
+    }
+
+    var listArray: [String]? {
+        didSet {
+            print("listArray did set and is \(String(describing: listArray))")
         }
     }
     
@@ -76,76 +81,78 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
     }
     
     @objc func appMovedToForeground() {
+        print("appMovedToForeground")
         loadUserList()
     }
     
-    
-    
     @IBAction func addCrush(_ sender: UIBarButtonItem) {
-        let alert = UIAlertController(title: "Add Someone To Your List",
-                                      message: "Type their Instagram handle",
-                                      preferredStyle: .alert)
-        
-        let saveAction = UIAlertAction(title: "Add",
-                                       style: .default) { _ in
-                                        guard let textField = alert.textFields?.first,
-                                            let text = textField.text else { return }
-                                        
-                                        // adds the new crush to user's list
-                                        // first checks that text field is not blank
-                                        // and not equal to the user's handle
-                                        if text.noAtSymbol() != self.userHandle?.noAtSymbol(), text != "" {
-                                            self.listArray?.append(text.withAtSymbol())
-                                        }
-                                        
-                                        // Checks how many lists user is on
-                                        self.checkForNameOnLists(nonAtUserHandle: self.userHandle?.noAtSymbol()) { (lists) -> () in
-                                            
-                                            // resets listsUserIsOn
-                                            self.listsUserIsOn = lists
-                                            
-                                            // changes text field in app
-                                            self.listsUserIsOnText.text = "\(self.listsUserIsOn!.count)"
-                                            
-                                            // Now that we know new lists the user is on
-                                            // check for any new matches
-                                            self.checkForMatches(userList: self.listArray)
-                                            self.tableView.reloadData()
-                                            
-                                            // Now that new matches have been checked for, sends notification for match or addition to list to added user
-                                            self.sendPushNotification(to: text)
-                                        }
-                                        
-        
+        let contactVC = CNContactPickerViewController()
+        contactVC.delegate = self
+        self.present(contactVC, animated: true, completion: nil)
     }
-        let cancelAction = UIAlertAction(title: "Cancel",
-                                         style: .cancel)
-        alert.addTextField()
+    
+    // MARK: Delegate method CNContectPickerDelegate
+    func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
+        let rawNumber = contact.phoneNumbers.first
+        let firstName = contact.givenName
+        let lastName = contact.familyName
+        let alsoRawNumber = (rawNumber?.value)?.stringValue
+        let number = alsoRawNumber?.tenChars()
+        let fullName = "\(firstName) \(lastName)"
         
-        alert.addAction(saveAction)
-        alert.addAction(cancelAction)
-        
-        present(alert, animated: true, completion: nil)
+        if number != self.userPhoneNumber, number != nil, !fullName.trimmingCharacters(in: .whitespaces).isEmpty {
+            self.listDict?[number!] = fullName
+        }
+
+        // Checks how many lists user is on
+        self.checkForNameOnLists(phoneNumber: self.userPhoneNumber) { (lists) -> () in
+            
+            // resets listsUserIsOn
+            self.listsUserIsOn = lists
+            
+            // changes text field in app
+            self.listsUserIsOnText.text = "\(self.listsUserIsOn!.count)"
+            
+            // Now that we know new lists the user is on
+            // check for any new matches
+            self.checkForMatches(userList: self.listArray)
+            self.tableView.reloadData()
+            
+            // Now that new matches have been checked for, sends notification for match or addition to list to added user
+            if number != nil {
+                self.sendPushNotification(to: number!)
+            }
+        }
         
     }
     
-    // Takes any optional userHandle (w/o the @ sign) and returns
-    // an array of all the people who have this userHandle on their list
+    // If you cancel adding a contact
+    func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
+        self.dismiss(animated: true, completion: nil)
+    }
+    
+    // Takes any optional user phone number and returns
+    // an array of all the people who have this phone number on their list
     // function uses a completion handler for async call
-    func checkForNameOnLists(nonAtUserHandle: String?, completion: @escaping ([String]) -> ()) {
+    func checkForNameOnLists(phoneNumber: String?, completion: @escaping ([String]) -> ()) {
+        print("checkForNameOnLists gets called")
         var arrayOfUsersWhoHaveCurrentUserOnTheirList: [String] = []
         let userRef = self.ref.child("users")
         userRef.observeSingleEvent(of: .value) { (snapshot) in
             for child in snapshot.children {
                 let snap = child as! DataSnapshot
                 let listSnap = snap.childSnapshot(forPath: "list")
-                let dict = listSnap.value as? [String : Bool]
-                let atUserHandle = "@\(nonAtUserHandle!)"
-                if dict?[atUserHandle] != nil {
-                    if let userWithCurrentUserOnList = snap.childSnapshot(forPath: "userHandle").value as? String {
-                        arrayOfUsersWhoHaveCurrentUserOnTheirList.append(userWithCurrentUserOnList)
+                let dict = listSnap.value as? [String : String]
+                if phoneNumber != nil {
+                    print("phoneNumber in checkForNameOnLists is not nil")
+                    if dict?[phoneNumber!] != nil {
+                        print("phoneNumber entry in database is not nil")
+                        if let userWithCurrentUserOnList = snap.childSnapshot(forPath: "userPhoneNumber").value as? String {
+                            arrayOfUsersWhoHaveCurrentUserOnTheirList.append(userWithCurrentUserOnList)
+                        }
                     }
                 }
+                
             }
             completion(arrayOfUsersWhoHaveCurrentUserOnTheirList)
         }
@@ -199,14 +206,15 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         cell.backgroundColor = .deepBlue
         
         
-        if listArray != nil {
+        if listArray != nil, listDict != nil {
             // If listArray count is 0 it will display default message
             if listArray!.count > 0 {
-                let handle = listArray![indexPath.item]
-                cell.listLabel.text = handle
+                let phoneNumber = listArray![indexPath.item]
+                let crushName = listDict![phoneNumber]
+                cell.listLabel.text = crushName
                 
                 // Logic to decide if this cell is a match or not
-                if matches.count > 0, matches.contains(handle) {
+                if matches.count > 0, matches.contains(phoneNumber) {
                     cell.listLabel.textColor = UIColor.black
                     cell.cellView.backgroundColor = .cyan
                 } else {
@@ -234,11 +242,14 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         if editingStyle == .delete {
             
             // Removes this handle from user's list
-            listArray?.remove(at: indexPath.item)
+            let dictKey = listArray?[indexPath.item]
+            if dictKey != nil {
+                listDict?[dictKey!] = nil
+            }
             
             // Checks how many lists user is on and updates matches
             // Do we need this after a handle is deleted from a list?
-            self.checkForNameOnLists(nonAtUserHandle: self.userHandle) { (lists) -> () in
+            self.checkForNameOnLists(phoneNumber: self.userPhoneNumber) { (lists) -> () in
                 self.listsUserIsOn = lists
                 self.listsUserIsOnText.text = "\(self.listsUserIsOn!.count)"
                 self.checkForMatches(userList: self.listArray)
@@ -267,10 +278,10 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
             // Creating a tempList so that listArray didSet is only called once
             var tempList = listArray!
             if matches.count > 0 {
-                for handle in matches {
-                    if let index = tempList.firstIndex(of: handle) {
-                        let matchedHandle = tempList.remove(at: index)
-                        tempList.insert(matchedHandle, at: 0)
+                for phoneNumber in matches {
+                    if let index = tempList.firstIndex(of: phoneNumber) {
+                        let matchedPhoneNumber = tempList.remove(at: index)
+                        tempList.insert(matchedPhoneNumber, at: 0)
                     }
                 }
             }
@@ -283,21 +294,18 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         if userList != nil, listsUserIsOn != nil {
             // Creating tempMatches so var's didSets don't get called
             var tempMatches: [String] = []
-            for handle in userList! {
-                let noAtHandle = handle.noAtSymbol()
-                if listsUserIsOn!.contains(noAtHandle) {
-                    tempMatches.append(handle)
+            for phoneNumber in userList! {
+                if listsUserIsOn!.contains(phoneNumber) {
+                    tempMatches.append(phoneNumber)
                 }
             }
             matches = tempMatches
         }
     }
     
-    func sendPushNotification(to handle: String) {
+    func sendPushNotification(to phoneNumber: String) {
         
         var pushToken: String?
-        
-        let handle = handle.noAtSymbol()
         
         let userRef = self.ref.child("users")
         
@@ -305,10 +313,10 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         userRef.observeSingleEvent(of: .value) { (snapshot) in
             for child in snapshot.children {
                 let snap = child as! DataSnapshot
-                let handleSnap = snap.childSnapshot(forPath: "userHandle")
+                let phoneSnap = snap.childSnapshot(forPath: "userPhoneNumber")
                 let pushTokenSnap = snap.childSnapshot(forPath: "pushToken")
-                let databaseHandle = handleSnap.value as? String
-                if handle == databaseHandle {
+                let databasePhoneNumber = phoneSnap.value as? String
+                if phoneNumber == databasePhoneNumber {
                     pushToken = pushTokenSnap.value as? String
                 }
             }
@@ -316,45 +324,48 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
             // Now we check if that "other user" has our user on their list
             // If so, we send "match" push notification, if not, other push notification
             if pushToken != nil {
-                if self.listsUserIsOn != nil, self.listsUserIsOn!.contains(handle) {
+                if self.listsUserIsOn != nil, self.listsUserIsOn!.contains(phoneNumber) {
                     let sender = PushNotificationSender()
-                    sender.sendPushNotification(to: pushToken!, title: "You have a new match!", body: "You have a new match!")
+                    sender.sendPushNotification(to: pushToken!, title: "", body: "You have a new match!")
                 } else {
                     let sender = PushNotificationSender()
-                    sender.sendPushNotification(to: pushToken!, title: "Someone added you to their list!", body: "Someone added you to their list!")
+                    sender.sendPushNotification(to: pushToken!, title: "", body: "Someone added you to their list!")
                 }
             }
         }
     }
     
     func loadUserList() {
-        
+        print("loadUserList gets called and firebaseUID is \(String(describing: firebaseUID))")
         // loads user's list
         ref.child("users/\(firebaseUID!)").observeSingleEvent(of: .value) { (snapshot) in
             if !snapshot.hasChild("list") {
                 print("Starter list is assigned")
                 // Assigns a starter list
-                self.listArray = []
+                self.listDict = [:]
             } else {
                 // retrieves list dictionary from Firebase
                 let value = snapshot.value as? NSDictionary
-                let codedListDict = value?["list"] as? [String : Bool]
+                let codedListDict = value?["list"] as? [String : String]
                 // Creates temporary dictionary to store decoded Firebase dictionary
                 let tempListDict = codedListDict?.decode(dict: codedListDict)
                 // Assigns the temp dictionary keys to be our listArray
                 if tempListDict != nil {
-                    self.listArray = Array(tempListDict!.keys)
+                    self.listDict = tempListDict
                 }
             }
             // Grabbing userHandle from Firebase
-            if snapshot.hasChild("userHandle") {
+            if snapshot.hasChild("userPhoneNumber") {
+                print("snapshot.hasChild contains userPhoneNumber in loadUserList")
                 let value = snapshot.value as? NSDictionary
-                if self.userHandle == nil {
-                    self.userHandle = value?["userHandle"] as? String
+                if self.userPhoneNumber == nil {
+                    let rawUserPhoneNumber = value?["userPhoneNumber"] as? String
+                    self.userPhoneNumber = rawUserPhoneNumber?.tenChars()
                 }
-                
+                print("userPhoneNumber in loadUserList before checkforNameOnList is \(String(describing: self.userPhoneNumber))")
                 // Checks how many lists user is on
-                self.checkForNameOnLists(nonAtUserHandle: self.userHandle) { (lists) -> () in
+                self.checkForNameOnLists(phoneNumber: self.userPhoneNumber) { (lists) -> () in
+                    print("lists after checkForNameOnLists is \(lists)")
                     self.listsUserIsOn = lists
                     self.listsUserIsOnText.text = "\(lists.count)"
                     self.tableView.reloadData()

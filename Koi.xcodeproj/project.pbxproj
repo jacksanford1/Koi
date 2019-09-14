@@ -18,9 +18,10 @@
 		0494562D2311D27000C88340 /* IntroScreenViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0494562C2311D27000C88340 /* IntroScreenViewController.swift */; };
 		049456342311E8E900C88340 /* MainScreenViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049456332311E8E900C88340 /* MainScreenViewController.swift */; };
 		049456362311EC4800C88340 /* MainScreenTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049456352311EC4800C88340 /* MainScreenTableViewCell.swift */; };
+		049D324B232C70FB00FBA283 /* DataViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049D324A232C70FB00FBA283 /* DataViewController.swift */; };
+		049D324F232CB74100FBA283 /* CustomPageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049D324E232CB74100FBA283 /* CustomPageViewController.swift */; };
 		04B7316A23187217006B243D /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B7316923187217006B243D /* Utilities.swift */; };
 		04D101C42314F3AA00B19734 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 04D101C32314F3AA00B19734 /* GoogleService-Info.plist */; };
-		04D101CB2315D1D200B19734 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D101CA2315D1D200B19734 /* User.swift */; };
 		04D101CD2315EBD500B19734 /* customauthkey.json in Resources */ = {isa = PBXBuildFile; fileRef = 04D101CC2315EBD500B19734 /* customauthkey.json */; };
 		04D101D02316297200B19734 /* PhoneAuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04D101CF2316297200B19734 /* PhoneAuthViewController.swift */; };
 		BF53EFDF179F2CE78D27075B /* Pods_Koi.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DE94387EC7CF44E99E5FAD38 /* Pods_Koi.framework */; };
@@ -40,9 +41,10 @@
 		0494562C2311D27000C88340 /* IntroScreenViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroScreenViewController.swift; sourceTree = "<group>"; };
 		049456332311E8E900C88340 /* MainScreenViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreenViewController.swift; sourceTree = "<group>"; };
 		049456352311EC4800C88340 /* MainScreenTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreenTableViewCell.swift; sourceTree = "<group>"; };
+		049D324A232C70FB00FBA283 /* DataViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataViewController.swift; sourceTree = "<group>"; };
+		049D324E232CB74100FBA283 /* CustomPageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPageViewController.swift; sourceTree = "<group>"; };
 		04B7316923187217006B243D /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Utilities.swift; path = Koi/Utilities.swift; sourceTree = SOURCE_ROOT; };
 		04D101C32314F3AA00B19734 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		04D101CA2315D1D200B19734 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		04D101CC2315EBD500B19734 /* customauthkey.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = customauthkey.json; sourceTree = "<group>"; };
 		04D101CE2316173300B19734 /* Koi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Koi.entitlements; sourceTree = "<group>"; };
 		04D101CF2316297200B19734 /* PhoneAuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneAuthViewController.swift; sourceTree = "<group>"; };
@@ -84,6 +86,7 @@
 		049456172310BD1000C88340 /* Koi */ = {
 			isa = PBXGroup;
 			children = (
+				049D322B232C24A100FBA283 /* Unused */,
 				04D101C92315D1BD00B19734 /* Models */,
 				04D101C72315D16B00B19734 /* Controllers */,
 				04D101C82315D19800B19734 /* Views */,
@@ -111,12 +114,21 @@
 			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		049D322B232C24A100FBA283 /* Unused */ = {
+			isa = PBXGroup;
+			children = (
+				0494561A2310BD1000C88340 /* InstaLoginViewController.swift */,
+			);
+			path = Unused;
+			sourceTree = "<group>";
+		};
 		04D101C72315D16B00B19734 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
 				04D101CF2316297200B19734 /* PhoneAuthViewController.swift */,
-				0494561A2310BD1000C88340 /* InstaLoginViewController.swift */,
 				0494562C2311D27000C88340 /* IntroScreenViewController.swift */,
+				049D324A232C70FB00FBA283 /* DataViewController.swift */,
+				049D324E232CB74100FBA283 /* CustomPageViewController.swift */,
 				049456332311E8E900C88340 /* MainScreenViewController.swift */,
 			);
 			path = Controllers;
@@ -133,7 +145,6 @@
 		04D101C92315D1BD00B19734 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				04D101CA2315D1D200B19734 /* User.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -306,9 +317,10 @@
 				04D101D02316297200B19734 /* PhoneAuthViewController.swift in Sources */,
 				0494562D2311D27000C88340 /* IntroScreenViewController.swift in Sources */,
 				049456192310BD1000C88340 /* AppDelegate.swift in Sources */,
+				049D324F232CB74100FBA283 /* CustomPageViewController.swift in Sources */,
 				04B7316A23187217006B243D /* Utilities.swift in Sources */,
 				0494562B2310C45C00C88340 /* Constants.swift in Sources */,
-				04D101CB2315D1D200B19734 /* User.swift in Sources */,
+				049D324B232C70FB00FBA283 /* DataViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

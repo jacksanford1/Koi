@@ -9,28 +9,30 @@
 import Foundation
 import UIKit
 
-extension Dictionary where Key == String, Value == Bool {
-    func encode(dict: [String:Bool]?) -> Dictionary {
-        var newList: [String:Bool] = [:]
+extension Dictionary where Key == String, Value == String {
+    func encode(dict: [String:String]?) -> Dictionary {
+        var newList: [String:String] = [:]
         if dict != nil {
             for (key, value) in dict! {
                 let customCharSet = (CharacterSet(charactersIn: ".$#[]/%").inverted)
                 let encodedKey = key.addingPercentEncoding(withAllowedCharacters: customCharSet)
+                let encodedValue = value.addingPercentEncoding(withAllowedCharacters: customCharSet)
                 if encodedKey != nil {
-                    newList[encodedKey!] = value
+                    newList[encodedKey!] = encodedValue
                 }
             }
         }
         return newList
     }
     
-    func decode(dict: [String:Bool]?) -> Dictionary {
-        var newList: [String:Bool] = [:]
+    func decode(dict: [String:String]?) -> Dictionary {
+        var newList: [String:String] = [:]
         if dict != nil {
             for (key, value) in dict! {
                 let decodedKey = key.removingPercentEncoding
+                let decodedValue = value.removingPercentEncoding
                 if decodedKey != nil {
-                    newList[decodedKey!] = value
+                    newList[decodedKey!] = decodedValue
                 }
             }
         }
@@ -54,6 +56,20 @@ extension String {
             noAtHandle = "@\(noAtHandle)"
         }
         return noAtHandle
+    }
+    
+    func tenChars() -> String {
+        var tenCharNumber = self
+        tenCharNumber = tenCharNumber.replacingOccurrences(of: "-", with: "", options: NSString.CompareOptions.literal, range: nil)
+        tenCharNumber = tenCharNumber.replacingOccurrences(of: "(", with: "", options: NSString.CompareOptions.literal, range: nil)
+        tenCharNumber = tenCharNumber.replacingOccurrences(of: ")", with: "", options: NSString.CompareOptions.literal, range: nil)
+        tenCharNumber = tenCharNumber.replacingOccurrences(of: "+", with: "", options: NSString.CompareOptions.literal, range: nil)
+        tenCharNumber = tenCharNumber.replacingOccurrences(of: " ", with: "", options: NSString.CompareOptions.literal, range: nil)
+        if tenCharNumber.count > 10 {
+            let numberToRemove = tenCharNumber.count - 10
+            tenCharNumber = String(tenCharNumber.dropFirst(numberToRemove))
+        }
+        return tenCharNumber
     }
     
 }

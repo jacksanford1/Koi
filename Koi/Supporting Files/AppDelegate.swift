@@ -20,6 +20,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         FirebaseApp.configure()
         
+        let pageControl = UIPageControl.appearance()
+        pageControl.currentPageIndicatorTintColor = .cyan
+        pageControl.pageIndicatorTintColor = .lightGray
+        
         return true
     }
 
