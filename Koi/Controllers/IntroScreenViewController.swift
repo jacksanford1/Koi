@@ -14,7 +14,7 @@ class IntroScreenViewController: UIViewController {
     var userPhoneNumber: String?
     @IBOutlet weak var contentView: UIView!
     
-    let dataSource = ["View Controller 1", "View Controller 2", "View Controller 3", "Go To Main Screen"]
+    let dataSource = ["View Controller 1", "View Controller 2", "View Controller 3", "View Controller 4", "Go To Main Screen"]
     
     var currentViewControllerIndex = 0
     
@@ -64,8 +64,8 @@ class IntroScreenViewController: UIViewController {
             return nil
         }
         
-        if index == 4 {
-            print("Made it through index == 4")
+        if index == 5 {
+            print("Made it through index == 5")
             if firebaseUID != nil, userPhoneNumber != nil {
                 print("Made it through firebaseUID and userPhoneNumber not nil")
                 performSegue(withIdentifier: "ShowMainScreen", sender: nil)

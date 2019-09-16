@@ -13,7 +13,7 @@ import FirebaseAuth
 
 class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
     
-    let fullLogin = false
+    let fullLogin = true
     var signedOut = false
     var newUser: Bool?
     fileprivate(set) var auth:Auth?
@@ -112,8 +112,30 @@ class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
 
     func chooseNextVC() {
         if newUser != nil, newUser == true {
-            print("Seguing to intro screen")
-            performSegue(withIdentifier: "ShowIntroScreen", sender: nil)
+            let alert = UIAlertController(title: "By using Koi you agree to the terms of service (EULA) and privacy policy. Koi has no tolerance for objectionable content or abusive users. You'll be banned for any inappropriate usage.", message: "", preferredStyle: .alert)
+            
+            alert.addAction(UIAlertAction(title: "Continue", style: .default, handler: { action in
+                print("Seguing to intro screen")
+                self.performSegue(withIdentifier: "ShowIntroScreen", sender: nil)
+            }))
+            
+            alert.addAction(UIAlertAction(title: "Leave", style: .cancel, handler: { action in
+                
+                // If user cancels sign-in, we delete user from database, then sign out of google
+                // and segue back to sign-in page
+                let ref = Database.database().reference()
+                ref.child("users/\(self.firebaseUID!)").removeValue(completionBlock: { (Error, DatabaseReference) in
+                    do {
+                        try Auth.auth().signOut()
+                    }
+                    catch let error as NSError {
+                        print(error.localizedDescription)
+                    }
+                })
+            }))
+            
+            self.present(alert, animated: true)
+            
         } else if newUser != nil, newUser == false {
             print("Did not segue to intro screen")
             performSegue(withIdentifier: "SkipToMainScreen", sender: nil)
@@ -183,13 +205,39 @@ extension PhoneAuthViewController {
         // Create an instance of the Firebase Auth login view controller
         let loginViewController = FUIAuthPickerViewController(authUI: authUI)
         
-        // Set background color to orange
+        // Create UITextField
+        let textView: UITextView = UITextView(frame: CGRect(x: 0, y: 0, width: 230, height: 70))
+        textView.center = CGPoint(x: self.view.frame.width / 2, y: self.view.frame.height - 70)
+        textView.textAlignment = .center
+        textView.backgroundColor = UIColor.clear
+        
+        // Create attributed string
+        let str = "By signing up you agree to the Terms of Service and Privacy Policy"
+        let attStr = NSMutableAttributedString.init(string: str)
+        
+        // Make Privacy Policy link
+        let privacyPolicy = "Privacy Policy"
+        let privacyPolicyURL = "https://www.koidating.com/privacypolicy"
+        attStr.setAsLink(textToFind: privacyPolicy, linkURL: privacyPolicyURL)
+        
+        // Make Terms of Service link
+        let terms = "Terms of Service"
+        let termsURL = "https://www.koidating.com/terms-of-use"
+        attStr.setAsLink(textToFind: terms, linkURL: termsURL)
+        
+        // Set attributed text to UITextView and put in view
+        textView.attributedText = attStr
+        textView.isUserInteractionEnabled = true
+        textView.isEditable = false
+        textView.textColor = UIColor.white
+        loginViewController.view.addSubview(textView)
+        
+        // Set background color of whole screen
         loginViewController.view.subviews[0].backgroundColor = UIColor.deepBlue
         loginViewController.view.subviews[0].subviews[0].backgroundColor = UIColor.deepBlue
         loginViewController.extendedLayoutIncludesOpaqueBars = true
         loginViewController.navigationItem.leftBarButtonItem = nil
         loginViewController.navigationItem.title = "koi"
-
         
         // Create a frame for an ImageView to hold our logo
         let marginInsets: CGFloat = 16

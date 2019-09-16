@@ -82,4 +82,13 @@ extension UIColor {
     static let trueBlue = UIColor(red: 65.0/255.0, green: 185.0/255.0 ,blue: 245.0/255.0, alpha: 1.0)
 }
 
-
+extension NSMutableAttributedString {
+    
+    public func setAsLink(textToFind:String, linkURL:String) {
+        
+        let foundRange = self.mutableString.range(of: textToFind)
+        if foundRange.location != NSNotFound {
+            self.addAttribute(.link, value: linkURL, range: foundRange)
+        }
+    }
+}

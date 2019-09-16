@@ -25,7 +25,8 @@ class DataViewController: UIViewController {
             switch index {
             case 0 : backgroundImage = UIImage.init(named: "Create a List")
             case 1 : backgroundImage = UIImage.init(named: "Matches")
-            case 2 : backgroundImage = UIImage.init(named: "Social Score")
+            case 2 : backgroundImage = UIImage.init(named: "removeUser")
+            case 3 : backgroundImage = UIImage.init(named: "Social Score")
             default: break
             }
         }
