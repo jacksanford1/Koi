@@ -112,11 +112,10 @@
                         <viewLayoutGuide key="safeArea" id="rGj-6z-mwr"/>
                     </view>
                     <navigationItem key="navigationItem" id="h05-rE-9eU">
-                        <barButtonItem key="leftBarButtonItem" title="Log Out" id="nQz-CG-tpK">
+                        <barButtonItem key="leftBarButtonItem" title="..." id="tHU-WD-yBY">
                             <color key="tintColor" red="0.0" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             <connections>
-                                <action selector="logOut:" destination="v7P-Ic-x3z" id="hoc-Yi-ndd"/>
-                                <segue destination="ZFl-2k-wi4" kind="presentation" identifier="LogOutSegue" id="ybN-hu-ycR"/>
+                                <action selector="actionSheet:" destination="v7P-Ic-x3z" id="n54-N6-jK2"/>
                             </connections>
                         </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" systemItem="add" id="JQu-3n-dxU">
@@ -128,6 +127,7 @@
                     </navigationItem>
                     <connections>
                         <outlet property="listsUserIsOnText" destination="9IZ-QC-Uyz" id="sR1-CQ-h7U"/>
+                        <segue destination="ZFl-2k-wi4" kind="presentation" identifier="LogOutSegue" id="QFU-SG-F70"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="fYx-dQ-s3O" userLabel="First Responder" sceneMemberID="firstResponder"/>

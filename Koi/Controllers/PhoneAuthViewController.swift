@@ -13,7 +13,7 @@ import FirebaseAuth
 
 class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
     
-    let fullLogin = true
+    let fullLogin = false
     var signedOut = false
     var newUser: Bool?
     fileprivate(set) var auth:Auth?

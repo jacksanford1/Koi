@@ -64,10 +64,29 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
     
     @IBOutlet weak var listsUserIsOnText: UILabel!
     
-    @IBAction func logOut(_ sender: UIBarButtonItem) {
-        performSegue(withIdentifier: "LogOutSegue", sender: nil)
+    @IBAction func actionSheet(_ sender: UIBarButtonItem) {
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+        let alert = UIAlertController(title: "Koi\nkoidating.com\nv\(appVersion ?? "2.0")", message: "", preferredStyle: .actionSheet)
+        
+        alert.addAction(UIAlertAction(title: "Contact Us", style: .default , handler:{ (UIAlertAction)in
+            if let url = URL(string: "https://www.koidating.com/contact") {
+                UIApplication.shared.open(url, options: [:])
+            }
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Log Out", style: .destructive , handler:{ (UIAlertAction)in
+                self.performSegue(withIdentifier: "LogOutSegue", sender: nil)
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler:{ (UIAlertAction)in
+            print("User click Dismiss button")
+        }))
+        
+        self.present(alert, animated: true, completion: {
+            print("completion block")
+        })
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -260,8 +279,8 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
     
     // Log Out segue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        let segueIdentifier = "LogOutSegue"
-        if segue.identifier == segueIdentifier, segueIdentifier == "LogOutSegue" {
+        if segue.identifier == "LogOutSegue" {
+            print("Logout segue runs!")
             var destination = segue.destination
             if let navcon = destination as? UINavigationController {
                 destination = navcon.visibleViewController ?? navcon
