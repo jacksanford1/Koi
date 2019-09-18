@@ -13,7 +13,7 @@ import FirebaseAuth
 
 class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
     
-    let fullLogin = false
+    let fullLogin = true
     var signedOut = false
     var newUser: Bool?
     fileprivate(set) var auth:Auth?
@@ -204,10 +204,37 @@ extension PhoneAuthViewController {
         
         // Create an instance of the Firebase Auth login view controller
         let loginViewController = FUIAuthPickerViewController(authUI: authUI)
+
+        // Set background color of whole screen
+        loginViewController.view.subviews[0].backgroundColor = UIColor.deepBlue
+        loginViewController.view.subviews[0].subviews[0].backgroundColor = UIColor.deepBlue
+        loginViewController.extendedLayoutIncludesOpaqueBars = true
+        loginViewController.navigationItem.leftBarButtonItem = nil
+        loginViewController.navigationItem.title = "koi"
         
-        // Create UITextField
-        let textView: UITextView = UITextView(frame: CGRect(x: 0, y: 0, width: 230, height: 70))
-        textView.center = CGPoint(x: self.view.frame.width / 2, y: self.view.frame.height - 70)
+        // Create a frame for an ImageView to hold our logo
+        let marginInsets: CGFloat = 16
+        let imageHeight: CGFloat = 225
+        let imageY = self.view.center.y - imageHeight
+        let logoFrame = CGRect(x: self.view.frame.origin.x + marginInsets, y: imageY, width: self.view.frame.width - (marginInsets*2), height: imageHeight)
+        
+        // Create the UIImageView using the frame created above and add the image
+        let logoImageView = UIImageView(frame: logoFrame)
+        logoImageView.image = UIImage(named: "clearKois")
+        logoImageView.contentMode = .scaleAspectFill
+        loginViewController.view.addSubview(logoImageView)
+        
+        
+        // Note: the way to get at the UIButton which is the "Sign in with Phone" button:
+        // print("button frame is \(loginViewController.view.subviews[0].subviews[0].subviews[0].subviews[0].frame)")
+        // We also use the superview of this button to position the privacy policy text
+        
+        // Do this in order to access the "Sign in with Phone" button's frame
+        loginViewController.view.setNeedsLayout()
+        loginViewController.view.layoutIfNeeded()
+        
+        // Create UITextField based on Google Auth button's y origin position
+        let textView: UITextView = UITextView(frame: CGRect(x: 0, y: loginViewController.view.subviews[0].subviews[0].subviews[0].subviews[0].frame.origin.y - 50, width: 230, height: 70))
         textView.textAlignment = .center
         textView.backgroundColor = UIColor.clear
         
@@ -230,26 +257,9 @@ extension PhoneAuthViewController {
         textView.isUserInteractionEnabled = true
         textView.isEditable = false
         textView.textColor = UIColor.white
-        loginViewController.view.addSubview(textView)
         
-        // Set background color of whole screen
-        loginViewController.view.subviews[0].backgroundColor = UIColor.deepBlue
-        loginViewController.view.subviews[0].subviews[0].backgroundColor = UIColor.deepBlue
-        loginViewController.extendedLayoutIncludesOpaqueBars = true
-        loginViewController.navigationItem.leftBarButtonItem = nil
-        loginViewController.navigationItem.title = "koi"
-        
-        // Create a frame for an ImageView to hold our logo
-        let marginInsets: CGFloat = 16
-        let imageHeight: CGFloat = 225
-        let imageY = self.view.center.y - imageHeight
-        let logoFrame = CGRect(x: self.view.frame.origin.x + marginInsets, y: imageY, width: self.view.frame.width - (marginInsets*2), height: imageHeight)
-        
-        // Create the UIImageView using the frame created above and add the image
-        let logoImageView = UIImageView(frame: logoFrame)
-        logoImageView.image = UIImage(named: "clearKois")
-        logoImageView.contentMode = .scaleAspectFill
-        loginViewController.view.addSubview(logoImageView)
+        // Adding this text to the superview of the Google Auth button ("Sign in with Phone" button) so that we can position it based on the button's position
+        loginViewController.view.subviews[0].subviews[0].subviews[0].addSubview(textView)
         
         return loginViewController
     }
