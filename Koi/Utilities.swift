@@ -38,6 +38,11 @@ extension Dictionary where Key == String, Value == String {
         }
         return newList
     }
+    
+    func key(for value: String) -> String? {
+        return compactMap { value == $1 ? $0 : nil }.first
+    }
+    
 }
 
 extension String {

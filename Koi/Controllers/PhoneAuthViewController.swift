@@ -13,7 +13,7 @@ import FirebaseAuth
 
 class PhoneAuthViewController: UIViewController, FUIAuthDelegate {
     
-    let fullLogin = true
+    let fullLogin = false
     var signedOut = false
     var newUser: Bool?
     fileprivate(set) var auth:Auth?
@@ -233,8 +233,13 @@ extension PhoneAuthViewController {
         loginViewController.view.setNeedsLayout()
         loginViewController.view.layoutIfNeeded()
         
+        let textViewWidth = CGFloat(220)
+        let textViewHeight = CGFloat(40)
+        let textViewStartYValue = loginViewController.view.subviews[0].subviews[0].subviews[0].frame.origin.y + loginViewController.view.subviews[0].subviews[0].subviews[0].subviews[0].frame.origin.y
+        
         // Create UITextField based on Google Auth button's y origin position
-        let textView: UITextView = UITextView(frame: CGRect(x: 0, y: loginViewController.view.subviews[0].subviews[0].subviews[0].subviews[0].frame.origin.y - 50, width: 230, height: 70))
+        let textView: UITextView = UITextView(frame: CGRect(x: (self.view.frame.width / 2) - (textViewWidth / 2), y: textViewStartYValue + 40, width: textViewWidth, height: textViewHeight))
+//        textView.center = CGPoint(x: self.view.frame.width / 2, y: textViewStartYValue)
         textView.textAlignment = .center
         textView.backgroundColor = UIColor.clear
         
@@ -259,7 +264,7 @@ extension PhoneAuthViewController {
         textView.textColor = UIColor.white
         
         // Adding this text to the superview of the Google Auth button ("Sign in with Phone" button) so that we can position it based on the button's position
-        loginViewController.view.subviews[0].subviews[0].subviews[0].addSubview(textView)
+        loginViewController.view.subviews[0].subviews[0].addSubview(textView)
         
         return loginViewController
     }

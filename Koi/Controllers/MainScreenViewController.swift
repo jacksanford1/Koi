@@ -15,6 +15,7 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
     
     let ref = Database.database().reference()
     var userPhoneNumber: String?
+    let startMessage = "Use the + to add someone to your list"
     var firebaseUID: String?
     var matches: [String] = [] {
         didSet {
@@ -64,9 +65,14 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
     
     @IBOutlet weak var listsUserIsOnText: UILabel!
     
+    // This is the menu for "Log Out", "Contact Us", etc.
     @IBAction func actionSheet(_ sender: UIBarButtonItem) {
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
         let alert = UIAlertController(title: "Koi\nkoidating.com\nv\(appVersion ?? "2.0")", message: "", preferredStyle: .actionSheet)
+        
+        if let popoverController = alert.popoverPresentationController {
+            popoverController.barButtonItem = sender
+        }
         
         alert.addAction(UIAlertAction(title: "Contact Us", style: .default , handler:{ (UIAlertAction)in
             if let url = URL(string: "https://www.koidating.com/contact") {
@@ -115,9 +121,18 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         let rawNumber = contact.phoneNumbers.first
         let firstName = contact.givenName
         let lastName = contact.familyName
+        let trimmedFirstName = firstName.trimmingCharacters(in: .whitespaces)
+        let trimmedLastName = lastName.trimmingCharacters(in: .whitespaces)
         let alsoRawNumber = (rawNumber?.value)?.stringValue
         let number = alsoRawNumber?.tenChars()
-        let fullName = "\(firstName) \(lastName)"
+        var fullName = ""
+        if trimmedFirstName != "", trimmedLastName != "" {
+            fullName = "\(trimmedFirstName) \(trimmedLastName)"
+        } else if trimmedFirstName != "" {
+            fullName = "\(trimmedFirstName)"
+        } else if trimmedLastName != "" {
+            fullName = "\(trimmedLastName)"
+        }
         
         if number != self.userPhoneNumber, number != nil, !fullName.trimmingCharacters(in: .whitespaces).isEmpty {
             self.listDict?[number!] = fullName
@@ -154,7 +169,6 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
     // an array of all the people who have this phone number on their list
     // function uses a completion handler for async call
     func checkForNameOnLists(phoneNumber: String?, completion: @escaping ([String]) -> ()) {
-        print("checkForNameOnLists gets called")
         var arrayOfUsersWhoHaveCurrentUserOnTheirList: [String] = []
         let userRef = self.ref.child("users")
         userRef.observeSingleEvent(of: .value) { (snapshot) in
@@ -163,9 +177,7 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
                 let listSnap = snap.childSnapshot(forPath: "list")
                 let dict = listSnap.value as? [String : String]
                 if phoneNumber != nil {
-                    print("phoneNumber in checkForNameOnLists is not nil")
                     if dict?[phoneNumber!] != nil {
-                        print("phoneNumber entry in database is not nil")
                         if let userWithCurrentUserOnList = snap.childSnapshot(forPath: "userPhoneNumber").value as? String {
                             arrayOfUsersWhoHaveCurrentUserOnTheirList.append(userWithCurrentUserOnList)
                         }
@@ -200,8 +212,10 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         
         view.addSubview(tableView)
         
+        print("self.view.frame.height / 2 is equal to \(self.view.frame.height / 2)")
+        
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 375),
+            tableView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: self.view.frame.height / 2),
             tableView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
             tableView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
             tableView.leftAnchor.constraint(equalTo: self.view.leftAnchor)
@@ -242,7 +256,7 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
                 }
             } else {
                 // Otherwise diplays the default message if list is empty
-                cell.listLabel.text = "Use the + to add someone to your list"
+                cell.listLabel.text = startMessage
                 cell.listLabel.textColor = .cyan
                 cell.cellView.backgroundColor = .deepBlue
             }
@@ -261,9 +275,12 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         if editingStyle == .delete {
             
             // Removes this handle from user's list
-            let dictKey = listArray?[indexPath.item]
-            if dictKey != nil {
-                listDict?[dictKey!] = nil
+            if listArray != nil {
+                if listArray!.count > 0 {
+                    if let dictKey = listArray?[indexPath.item] {
+                        listDict?[dictKey] = nil
+                    }
+                }
             }
             
             // Checks how many lists user is on and updates matches
@@ -293,18 +310,49 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
     
     // Function so matches go to top of user's list
     func sortList() -> [String] {
-        if listArray != nil {
+        print("SortList() runs")
+        if listArray != nil, listDict != nil, listArray != [], listDict != [:] {
+            
             // Creating a tempList so that listArray didSet is only called once
-            var tempList = listArray!
+            // Grabbing names from listDict and sorting alphabetically
+            // then adding numbers to tempNumberList in that order
+            let tempSortedNameList = listDict!.values.sorted{$0.localizedCompare($1) == .orderedDescending}
+            var tempSortedNumberList: [String] = []
+            for name in tempSortedNameList {
+                if let number = listDict!.key(for: name) {
+                    tempSortedNumberList.insert(number, at: 0)
+                }
+            }
+            
+            // If user has matches we grab the names associated with them, alphabetize them
+            // and then re-insert them into the overall number list in the alphabetized order
             if matches.count > 0 {
-                for phoneNumber in matches {
-                    if let index = tempList.firstIndex(of: phoneNumber) {
-                        let matchedPhoneNumber = tempList.remove(at: index)
-                        tempList.insert(matchedPhoneNumber, at: 0)
+                var tempNameMatches: [String] = []
+                var tempSortedNameMatches: [String] = []
+                var tempSortedNumberMatches: [String] = []
+                // grabs names associated with numbers in matches array
+                for number in matches {
+                    if let dictName = listDict![number] {
+                        tempNameMatches.append(dictName)
+                    }
+                }
+                // sorts names alphabetically
+                tempSortedNameMatches = tempNameMatches.sorted{$0.localizedCompare($1) == .orderedAscending}
+                // get sorted array of the numbers
+                for name in tempSortedNameMatches {
+                    if let number = listDict!.key(for: name) {
+                        tempSortedNumberMatches.insert(number, at: 0)
+                    }
+                }
+                // Add matches to the very front of the overall list
+                for phoneNumber in tempSortedNumberMatches {
+                    if let index = tempSortedNumberList.firstIndex(of: phoneNumber) {
+                        let matchedPhoneNumber = tempSortedNumberList.remove(at: index)
+                        tempSortedNumberList.insert(matchedPhoneNumber, at: 0)
                     }
                 }
             }
-            return tempList
+            return tempSortedNumberList
         }
         return []
     }
@@ -355,11 +403,9 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
     }
     
     func loadUserList() {
-        print("loadUserList gets called and firebaseUID is \(String(describing: firebaseUID))")
         // loads user's list
         ref.child("users/\(firebaseUID!)").observeSingleEvent(of: .value) { (snapshot) in
             if !snapshot.hasChild("list") {
-                print("Starter list is assigned")
                 // Assigns a starter list
                 self.listDict = [:]
             } else {
@@ -375,16 +421,13 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
             }
             // Grabbing userHandle from Firebase
             if snapshot.hasChild("userPhoneNumber") {
-                print("snapshot.hasChild contains userPhoneNumber in loadUserList")
                 let value = snapshot.value as? NSDictionary
                 if self.userPhoneNumber == nil {
                     let rawUserPhoneNumber = value?["userPhoneNumber"] as? String
                     self.userPhoneNumber = rawUserPhoneNumber?.tenChars()
                 }
-                print("userPhoneNumber in loadUserList before checkforNameOnList is \(String(describing: self.userPhoneNumber))")
                 // Checks how many lists user is on
                 self.checkForNameOnLists(phoneNumber: self.userPhoneNumber) { (lists) -> () in
-                    print("lists after checkForNameOnLists is \(lists)")
                     self.listsUserIsOn = lists
                     self.listsUserIsOnText.text = "\(lists.count)"
                     self.tableView.reloadData()
@@ -393,12 +436,6 @@ class MainScreenViewController: UIViewController, UITableViewDelegate, UITableVi
         }
         
     }
-    
-    
-    
-    
-    
-    
     
 }
 
