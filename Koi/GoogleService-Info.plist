@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>232954783329-feqio0oblm1ulkpcpqafuo639i92rnla.apps.googleusercontent.com</string>
+	<string>[REDACTED]</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.232954783329-feqio0oblm1ulkpcpqafuo639i92rnla</string>
+	<string>[REDACTED]</string>
 	<key>API_KEY</key>
-	<string>AIzaSyCg9ir-3qPxlYfB1iWmTl67ruXb0VS7hGQ</string>
+	<string>[REDACTED]</string>
 	<key>GCM_SENDER_ID</key>
-	<string>232954783329</string>
+	<string>[REDACTED]</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
@@ -29,7 +29,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:232954783329:ios:51c41995da2333cf</string>
+	<string>[REDACTED]</string>
 	<key>DATABASE_URL</key>
 	<string>https://koi-dating.firebaseio.com</string>
 </dict>
